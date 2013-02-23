@@ -28,7 +28,7 @@ def getQuote():
 	if quote == None or quote == 'None':
 		try:
 			logging.debug('invoking iheartquotes')
-			url = 'http://www.iheartquotes.com/api/v1/random?source=news&format=json'
+			url = 'http://www.iheartquotes.com/api/v1/random?source=songs_poems&format=json'
 			data = urllib2.urlopen(url, timeout=30).read()
 			
 			jsondata = simplejson.loads(data)

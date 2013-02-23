@@ -143,93 +143,45 @@ currentVideoList = []
 		}
 		return false;
 	}
+
+	function getVideoListCallback(data){
+		if(data == null || data.query.results == null){
+			toggleErrorMessage(true,'Sorry, no videos found. Please try again.');
+		}
+		else{
+			processVideoList(data);
+			if(currentVideoList.length > 0){
+				vidId = currentVideoList[0].id;
+				getSimilarVideos(vidId);
+			}
+		}
+
+	}
 	
 	/**
 	 *  Get a list of videos from yql that match the given search criteria
 	 */
 	function getVideosList(searchTerm){
-		searchUrl = 'http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20music.video.search%20where%20keyword="'+searchTerm+'"&format=json';
-		var ajaxRequest;
-		
-		try{
-			// Opera 8.0+, Firefox, Safari
-			ajaxRequest = new XMLHttpRequest();
-		} catch (e){
-			// Internet Explorer Browsers
-			try{
-				ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");
-			} catch (e) {
-				try{
-					ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");
-				} catch (e){
-					// Something went wrong
-					alert("Your browser broke!");
-					return false;
-				}
-			}
-		}
-		// Create a function that will receive data sent from the server
-		ajaxRequest.onreadystatechange = function(){
-			if(ajaxRequest.readyState == 4){
-				data = eval("("+ajaxRequest.responseText+")");
-				if(data == null || data.query.results == null){
-					toggleErrorMessage(true);
-				}
-				else{
-					processVideoList(data);
-					if(currentVideoList.length > 0){
-						vidId = currentVideoList[0].id;
-						getSimilarVideos(vidId);
-					}
-				}
-			}
-		}
-
-		ajaxRequest.open("GET", searchUrl, true);
-		ajaxRequest.send(null); 
+		searchUrl = 'http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20music.video.search%20where%20keyword="'+searchTerm+'"&format=json&diagnostics=true';
+		ajax(searchUrl,getVideoListCallback)
 	}
-		
+	
+	function gSimilarVideoCallback(data){
+		processVideoList(data);
+		currentVideoList = shuffleArray(currentVideoList);
+		//only used for testing
+		//displaySongList();
+		origVid = currentVideoList[0];
+		previousSearches.push(origVid.artist);
+		playVideo(origVid.artist, origVid.title);
+	}
 		
 	/**
 	* Get a list of similar videos from yql
 	*/
 	function getSimilarVideos(vidId){
 		similarUrl = 'http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20music.video.similar%20where%20id="' + vidId + '"&format=json';
-		var ajaxRequest;
-		
-		try{
-			// Opera 8.0+, Firefox, Safari
-			ajaxRequest = new XMLHttpRequest();
-		} catch (e){
-			// Internet Explorer Browsers
-			try{
-				ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");
-			} catch (e) {
-				try{
-					ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");
-				} catch (e){
-					// Something went wrong
-					alert("Your browser broke!");
-					return false;
-				}
-			}
-		}
-		// Create a function that will receive data sent from the server
-		ajaxRequest.onreadystatechange = function(){
-			if(ajaxRequest.readyState == 4){
-				data = eval("("+ajaxRequest.responseText+")");
-				processVideoList(data);
-				currentVideoList = shuffleArray(currentVideoList);
-				//only used for testing
-				//displaySongList();
-				origVid = currentVideoList[0];
-				previousSearches.push(origVid.artist);
-				playVideo(origVid.artist, origVid.title);
-			}
-		}
-
-		ajaxRequest.open("GET", similarUrl, true);
-		ajaxRequest.send(null); 
+		ajax(similarUrl,gSimilarVideoCallback);
 	}
 	
 	/**
@@ -282,73 +234,49 @@ currentVideoList = []
 	 */
 	function playVideo(artist,title){
 		searchUrl = 'https://gdata.youtube.com/feeds/api/videos?q='+artist + ' ' + title +'&orderby=relevance&start-index=1&max-results=2&v=2&alt=json';
-		var ajaxRequest;
-		try{
-			// Opera 8.0+, Firefox, Safari
-			ajaxRequest = new XMLHttpRequest();
-		} catch (e){
-			// Internet Explorer Browsers
-			try{
-				ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");
-			} catch (e) {
-				try{
-					ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");
-				} catch (e){
-					// Something went wrong
-					alert("Your browser broke!");
-					return false;
-				}
-			}
-		}
-		// Create a function that will receive data sent from the server
-		ajaxRequest.onreadystatechange = function(){
-			if(ajaxRequest.readyState == 4 && ajaxRequest.responseText != ''){
-				data = eval("("+ajaxRequest.responseText+")");
-				playing = false;
-				
-				var canEmbed = false;
-				var e = data.feed.entry;
-				if(e != null){
-					for(var i=0; i< e.length;i++){
-						value = e[i];		
-						//check to see if the api allows us to embed the video
-						for(var j=0; j< value.yt$accessControl.length;j++){
-							if(value.yt$accessControl[j].action != 'embed')
-								continue;
-							else{
-								permission = value.yt$accessControl[j].permission;
-								if(permission == 'allowed')
-									canEmbed = true;
-								break;
-							}
-						}
-						
-						videoId = value.media$group.yt$videoid.$t;
-						if(videoId != null && videoId != '' && !playing && canEmbed){
-							loadVideo(videoId);
-							playing=true;
-						}//if
+		ajax(searchUrl, playVideoCallback);
+		populateCurrentVideoInfo(artist, title);
+	}
+
+	function playVideoCallback(data){
+		playing = false;
+		
+		var canEmbed = false;
+		var e = data.feed.entry;
+		if(e != null){
+			for(var i=0; i< e.length;i++){
+				value = e[i];		
+				//check to see if the api allows us to embed the video
+				for(var j=0; j< value.yt$accessControl.length;j++){
+					if(value.yt$accessControl[j].action != 'embed')
+						continue;
+					else{
+						permission = value.yt$accessControl[j].permission;
+						if(permission == 'allowed')
+							canEmbed = true;
+						break;
 					}
 				}
 				
-				if(!canEmbed){
-					nextVideo();
-				}
-				
-				/*$.each(data.feed.entry, function(key, value){
-					videoId = value.media$group.yt$videoid.$t;
-					if(videoId != null && videoId != '' && !playing){
-						loadVideo(videoId);
-						playing=true;
-					}//if
-				});//each
-				*/
+				videoId = value.media$group.yt$videoid.$t;
+				if(videoId != null && videoId != '' && !playing && canEmbed){
+					loadVideo(videoId);
+					playing=true;
+				}//if
 			}
 		}
-	
-		ajaxRequest.open("GET", searchUrl, true);
-		ajaxRequest.send(null); 
-		populateCurrentVideoInfo(artist, title);
+		
+		if(!canEmbed){
+			nextVideo();
+		}
+		/*$.each(data.feed.entry, function(key, value){
+			videoId = value.media$group.yt$videoid.$t;
+			if(videoId != null && videoId != '' && !playing){
+				loadVideo(videoId);
+				playing=true;
+			}//if
+		});//each
+		*/
 	}
 	
 	/**
@@ -430,7 +358,7 @@ currentVideoList = []
 	/**
 	 * Generic function to make ajax calls.  Append callback method to url before calling this method.
 	 */
-	function ajax(url){
+	function ajax(url, callback){
 		var ajaxRequest;
 		console.log('making ajax call for url:' + url)
 		try{
@@ -455,7 +383,13 @@ currentVideoList = []
 		ajaxRequest.onreadystatechange = function(){
 			if(ajaxRequest.readyState == 4 && ajaxRequest.responseText != ''){
 				data = eval("("+ajaxRequest.responseText+")");
-				console.log(data.query.pages);
+				if(data.query.diagnostics && data.query.diagnostics.url.error){
+					toggleErrorMessage(true,"Error invoking external service. Please try again.");
+				}
+				else{
+					callback(data);
+				}
+				//console.log(data.query.pages);
 			}
 		}
 		ajaxRequest.open("GET", url, true);
@@ -478,12 +412,13 @@ currentVideoList = []
 		document.getElementById('allVideos').innerHTML += songlist;
 	}
 	
-	function toggleErrorMessage(doShow){
+	function toggleErrorMessage(doShow, msg){
 		doDisplay = "none";
 		if(doShow){
 			doDisplay = "block";
+			document.getElementById('errorMessage').innerHTML = msg;
 		}
-		document.getElementById('errorMessage').style.display = doDisplay;
+		document.getElementById('errorMessageDiv').style.display = doDisplay;
 	}
     
     
