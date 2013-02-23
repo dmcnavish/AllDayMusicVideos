@@ -42,17 +42,16 @@
 						<div id="ytapiplayer">
 							<p>You need Flash player 8+ and JavaScript enabled to view this video.</p>
 						</div>
-
+						<div id='loadingDiv' class='loading_img' style="display:none;">
+							<img src="assets/images/ajax-loader_bar.gif">
+						</div>
 						<span>Enter an artist, song, or genre</span>
 						<input type="text" id='userEntry' value="arcade fire"/>
 						<span class='buttons' id="submitEntry">Go</span>
-						
-						<!--<button type="button" class="buttons" id='submitEntry' >Go</button>-->
 						<div id='errorMessageDiv' style="display:none;">
 							<p id='errorMessage'>Sorry, no videos Found.  Please try again.</p>
 						</div>
 						<div id='videoInput' style="display:none;">
-							<!--<span>skip to the next video</span>-->
 							<button id="submitVideo" class="buttons" onclick="nextVideo()">Next Video</button>
 						</div>	
 					</div>

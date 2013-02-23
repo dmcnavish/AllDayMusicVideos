@@ -359,6 +359,7 @@ currentVideoList = []
 	 * Generic function to make ajax calls.  Append callback method to url before calling this method.
 	 */
 	function ajax(url, callback){
+		toggleDisplay(true, 'loadingDiv');
 		var ajaxRequest;
 		console.log('making ajax call for url:' + url)
 		try{
@@ -385,6 +386,7 @@ currentVideoList = []
 				data = eval("("+ajaxRequest.responseText+")");
 				if(data.query.diagnostics && data.query.diagnostics.url.error){
 					toggleErrorMessage(true,"Error invoking external service. Please try again.");
+					toggleDisplay(false, 'loadingDiv');
 				}
 				else{
 					callback(data);
@@ -413,12 +415,19 @@ currentVideoList = []
 	}
 	
 	function toggleErrorMessage(doShow, msg){
+		if(doShow){
+			document.getElementById('errorMessage').innerHTML = msg;
+		}
+		toggleDisplay(doShow, 'errorMessageDiv');
+	}
+
+	//Toggle the display of an object by its id
+	function toggleDisplay(doShow, objId){
 		doDisplay = "none";
 		if(doShow){
 			doDisplay = "block";
-			document.getElementById('errorMessage').innerHTML = msg;
 		}
-		document.getElementById('errorMessageDiv').style.display = doDisplay;
+		document.getElementById(objId).style.display = doDisplay;
 	}
     
     

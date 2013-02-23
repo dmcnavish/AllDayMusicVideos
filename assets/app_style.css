@@ -9,3 +9,8 @@ div.ytapiplayer {
 div.videoInput{
 	padding-top:10px;
 }
+
+.loading_img{
+	position:relative;
+	left:30%;
+}
