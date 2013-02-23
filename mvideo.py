@@ -10,8 +10,7 @@ class MainPage(webapp2.RequestHandler):
 	def get(self):
 		logging.getLogger().setLevel(logging.DEBUG)
 		template_values = {
-			#'quote': getQuote()
-			#at the moment, i heart quotes doesn't have a music category, maybe we could scrape http://www.goodreads.com/quotes/tag/music
+			'quote': getQuote()
 		}
 
 		path = os.path.join(os.path.dirname(__file__), 'mvideo.html')
@@ -28,6 +27,8 @@ def getQuote():
 	if quote == None or quote == 'None':
 		try:
 			logging.debug('invoking iheartquotes')
+			# At the moment, i heart quotes doesn't have a music category so song/poems is the closest we can get.
+			# Maybe we could scrape http://www.goodreads.com/quotes/tag/music
 			url = 'http://www.iheartquotes.com/api/v1/random?source=songs_poems&format=json'
 			data = urllib2.urlopen(url, timeout=30).read()
 			
