@@ -64,9 +64,9 @@ currentVideoList = []
 		if(currentVideoIdx >= currentVideoList.length){
 			//clear the list and get more videos.  To make it more random, instead of 
 			//using the original search term, we will use the first  artist in the list that doesn't  
-			// doesn't match the search.  This could cause pretty random results depending on YQL similar search.	
+			// doesn't match the search.  This could cause pretty random results depending on YQL similar search.
 			searchTerm = currentVideoList[0].artist;
-			for(var i=0;i<=currentVideoList.length;i++){
+			for(var i=0;i<currentVideoList.length;i++){
 				if(previousSearches.indexOf(currentVideoList[i].artist) == -1 ){
 						searchTerm = currentVideoList[i].artist;
 						break;
@@ -162,7 +162,7 @@ currentVideoList = []
 	 *  Get a list of videos from yql that match the given search criteria
 	 */
 	function getVideosList(searchTerm){
-		searchUrl = 'http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20music.video.search%20where%20keyword="'+searchTerm+'"&format=json&diagnostics=true';
+		searchUrl = 'http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20music.video.search%20where%20keyword="'+searchTerm+'"&format=json&diagnostics=true&limit=10';
 		ajax(searchUrl,getVideoListCallback)
 	}
 	
@@ -195,6 +195,11 @@ currentVideoList = []
 		//console.debug('data is valid');
 		
 		var v = data.query.results.Video;
+		if(!v.length){
+			t = []
+			t[0] = v;
+			v = t;  //sometimes this value is an array and sometimes not.
+		}
 		for(var i=0; i< v.length; i++){
 			value = v[i];
 			if(value == null) continue;
@@ -236,6 +241,7 @@ currentVideoList = []
 		searchUrl = 'https://gdata.youtube.com/feeds/api/videos?q='+artist + ' ' + title +'&orderby=relevance&start-index=1&max-results=2&v=2&alt=json';
 		ajax(searchUrl, playVideoCallback);
 		populateCurrentVideoInfo(artist, title);
+		toggleDisplay(false, 'loadingDiv');
 	}
 
 	function playVideoCallback(data){
@@ -384,7 +390,7 @@ currentVideoList = []
 		ajaxRequest.onreadystatechange = function(){
 			if(ajaxRequest.readyState == 4 && ajaxRequest.responseText != ''){
 				data = eval("("+ajaxRequest.responseText+")");
-				if(data.query.diagnostics && data.query.diagnostics.url.error){
+				if(data.query && data.query.diagnostics && data.query.diagnostics.url.error){
 					toggleErrorMessage(true,"Error invoking external service. Please try again.");
 					toggleDisplay(false, 'loadingDiv');
 				}
