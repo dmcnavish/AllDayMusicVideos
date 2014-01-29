@@ -10,3 +10,5 @@ In order to find offical videos, the engine uses a combination of Yahoo APIs and
 The app is currently running on Google App Engine and can be found at http://alldaymvideo.appspot.com/
 
 In order to run the application locally, download the newest version of Google App Engine and load the main directory.
+
+UPDATE: This app no longer works correctly. Yahoo has recently discontinued the music API that I was using, which was the backbone of this application. I'll try and find another API with similar data.
